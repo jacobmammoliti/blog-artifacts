@@ -1,0 +1,35 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: github-webhook
+  namespace: argo-events
+spec:
+  service:
+    ports:
+      - name: webhook
+        port: 12000
+        targetPort: 12000
+  github:
+    demo:
+      repositories:
+        - owner: jacobmammoliti
+          names:
+            - blog-artifacts
+      webhook:
+        endpoint: /push
+        port: "12000"
+        method: POST
+        url: https://argo-events.coldbrewlabs.ca
+      events:
+        - "*"
+      webhookSecret:
+        name: github-webhook-secret
+        key: github-webhook-secret
+      # type of the connection between event-source and Github.
+      # You should set it to false to avoid man-in-the-middle and other attacks.
+      insecure: false
+      # Determines if notifications are sent when the webhook is triggered
+      active: true
+      # The media type used to serialize the payloads
+      contentType: json

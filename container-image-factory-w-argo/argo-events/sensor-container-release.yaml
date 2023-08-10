@@ -1,0 +1,95 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: buildkit-sensor
+  namespace: argo-events
+spec:
+  template:
+    serviceAccountName: argo-events-sa
+  dependencies:
+    - name: release-dependency
+      eventSourceName: github-webhook
+      eventName: demo
+      filters:
+        data:
+          # Type of Github event that triggered the delivery: [pull_request, push, issues, label, ...]
+          # https://docs.github.com/en/developers/webhooks-and-events/webhook-events-and-payloads
+          - path: headers.X-Github-Event
+            type: string
+            value:
+              - release
+          - path: body.action
+            type: string
+            value:
+              - created
+  triggers:
+    - template:
+        name: github-workflow-trigger
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: buildkit-
+              spec:
+                entrypoint: docker-build-push
+                arguments:
+                  parameters:
+                    - name: release-tag
+                    - name: git-repository-url
+                    - name: image-name
+                volumeClaimTemplates:
+                  - metadata:
+                      name: workdir
+                    spec:
+                      accessModes: [ "ReadWriteOnce" ]
+                      resources:
+                        requests:
+                          storage: 1Gi
+                serviceAccountName: argo-events-sa
+                templates:
+                  - name: docker-build-push
+                    inputs:
+                      parameters:
+                        - name: release-tag
+                        - name: git-repository-url
+                        - name: image-name
+                    steps:
+                      - - name: git-clone
+                          templateRef:
+                            name: git-clone
+                            template: git-clone
+                          arguments:
+                            parameters:
+                              - name: git-repository-url
+                                value: "{{inputs.parameters.git-repository-url}}"
+                      - - name: kaniko-build-azure
+                          templateRef:
+                            name: kaniko-build-azure
+                            template: kaniko-build-azure
+                          arguments:
+                            parameters:
+                              - name: release-tag
+                                value: "{{inputs.parameters.release-tag}}"
+                              - name: image-name
+                                value: "{{inputs.parameters.image-name}}"
+                              - name: registry-name
+                                value: "nonproductionacr.azurecr.io"
+          parameters:
+            - src:
+                dependencyName: release-dependency
+                dataKey: body.release.tag_name
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: release-dependency
+                dataKey: body.repository.html_url
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: release-dependency
+                dataKey: body.repository.name
+              dest: spec.arguments.parameters.2.value
+      retryStrategy:
+        steps: 3

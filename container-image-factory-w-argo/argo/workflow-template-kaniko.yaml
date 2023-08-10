@@ -1,0 +1,32 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: kaniko-build-azure
+  namespace: argo-events
+spec:
+  entrypoint: kaniko-build-azure
+  volumeClaimTemplates:
+    - metadata:
+        name: workdir
+  templates:
+    - name: kaniko-build-azure
+      inputs:
+        parameters:
+          - name: release-tag
+          - name: image-name
+          - name: registry-name
+      metadata:
+        labels:
+          azure.workload.identity/use: "true" # This is required by Azure to use Workload Identity
+      container:
+        image: gcr.io/kaniko-project/executor:debug
+        command: ["/kaniko/executor"]
+        args: [
+          "--dockerfile=/workdir/repo/app/Dockerfile",
+          "--context=/workdir/repo/app",
+          "--destination={{inputs.parameters.registry-name}}/{{inputs.parameters.image-name}}:{{inputs.parameters.release-tag}}"
+        ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /workdir

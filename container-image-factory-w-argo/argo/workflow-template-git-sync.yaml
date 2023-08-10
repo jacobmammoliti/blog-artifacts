@@ -1,0 +1,27 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: git-clone
+  namespace: argo-events
+spec:
+  entrypoint: git-clone
+  volumeClaimTemplates:
+    - metadata:
+        name: workdir
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+  templates:
+    - name: git-clone
+      inputs:
+        parameters:
+          - name: git-repository-url
+      container:
+        image: alpine/git
+        command: ["git", "clone", "{{inputs.parameters.git-repository-url}}", "/workdir/repo"]
+        volumeMounts:
+          - name: workdir
+            mountPath: /workdir
