@@ -1,0 +1,18 @@
+steps:
+  # Docker build
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t',
+    '$LOCATION.pkg.dev/$PROJECT_ID/$LOCATION-docker-registry/bookstoscrape:1.0',
+    '-t',
+    '$LOCATION.pkg.dev/$PROJECT_ID/$LOCATION-docker-registry/bookstoscrape:1.0',
+    '.']
+  
+  # Docker push to Google Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 
+    '$LOCATION.pkg.dev/$PROJECT_ID/$LOCATION-docker-registry/bookstoscrape',
+    '--all-tags']
+  
+# Store images in Google Artifact Registry
+images:
+  - $LOCATION.pkg.dev/$PROJECT_ID/$LOCATION-docker-registry/bookstoscrape:1.0
