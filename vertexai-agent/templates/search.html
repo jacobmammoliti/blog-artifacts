@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">NHL Game Search</h1>
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <form method="post">
+                    <div class="input-group">
+                        <input type="text" name="query" class="form-control" placeholder="Enter your search query">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% if results %}
+        <div class="mt-5">
+            {% for result in results %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-around">
+                        <div class="text-center">
+                            <h4>{{ result.away_team }}</h4>
+                            <p>Score: {{ result.away_team_score }}</p>
+                        </div>
+                        <div class="text-center">
+                            <h4>{{ result.home_team }}</h4>
+                            <p>Score: {{ result.home_team_score }}</p>
+                        </div>
+                    </div>
+                    <p class="text-center mt-3">Date: {{ result.date }} | Time: {{ result.time }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
